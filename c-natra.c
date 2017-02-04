@@ -116,6 +116,7 @@ void _render_template(struct response *resp, const char *template,
 		template = c += 2;
 	}
 	evbuffer_add(resp->buffer, template, c - template);
+	trie_free(map, 0);
 }
 
 struct trie *_map(void *dummy, ...)
