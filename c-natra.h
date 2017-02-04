@@ -30,10 +30,9 @@
 		"	.incbin	\""FNAME"\"	\n"			\
 		"	.byte	0		\n"			\
 		"	.align	4		\n"			\
-		"	.text			\n"			\
-		: : );							\
+		"	.text			\n");			\
 	extern void *template_##ID;					\
-	_render_template(req->ev_req, (char *)&template_##ID, MAP)
+	_render_template(resp, (char *)&template_##ID, MAP)
 #define view2(FNAME, MAP, ID) view3(FNAME, MAP, ID)
 #define view(FNAME, MAP) view2(FNAME, MAP, __COUNTER__)
 #define json(PATTERN, ...) body(PATTERN, ##__VA_ARGS__);		\
@@ -78,7 +77,7 @@ struct handler {
 
 int start(uint16_t port);
 void request_handler(struct evhttp_request *req, void *context);
-void _render_template(struct evhttp_request *req, const char *template, struct trie *map);
+void _render_template(struct response *resp, const char *template, struct trie *map);
 struct trie *_map(void *, ...);
 void _set_header(struct evhttp_request *req, const char *key, const char *value);
 void fill_body(struct response *resp, const char *format, ...);

@@ -95,16 +95,41 @@ void _set_header(struct evhttp_request *req, const char *key, const char *value)
 	evhttp_add_header(headers, key, value);
 }
 
-void _render_template(struct evhttp_request *req, const char *template,
+void _render_template(struct response *resp, const char *template,
 		      struct trie *map)
 {
-	/* TODO */
-	puts(template);
+	const char *c = template;
+	char *value, key[64];
+	size_t i;
+	for (; *c; ++c) {
+		if (c[0] != '{' || c[1] != '{')
+			continue;
+		evbuffer_add(resp->buffer, template, c - template);
+		c += 2;
+		for (i = 0; *c && (c[0] != '}' || c[1] != '}'); ++c, ++i)
+			key[i] = *c;
+		key[i] = 0;
+		value = trie_find(map, key);
+		for (i = 0; value[i]; ++i)
+			;
+		evbuffer_add(resp->buffer, value, i);
+		template = c += 2;
+	}
+	evbuffer_add(resp->buffer, template, c - template);
 }
 
 struct trie *_map(void *dummy, ...)
 {
-	/* TODO */
+	va_list ap;
+	char *key, *value;
+	struct trie *map = trie_new();
+
+	va_start(ap, dummy);
+	while ((key = va_arg(ap, char *)) && (value = va_arg(ap, char *)))
+		trie_insert(map, key, value);
+	va_end(ap);
+
+	return map;
 }
 
 int start(uint16_t port)
