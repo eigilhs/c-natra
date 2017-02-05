@@ -26,13 +26,13 @@ void request_handler(struct evhttp_request *req, void *context)
 	const char *u, *p;
 	uint16_t i, code;
 	char key[64], *value;
-	struct response resp;
+	struct request request;
+	struct response response;
 	struct handler **cur;
 
 	enum evhttp_cmd_type method = evhttp_request_get_command(req);
 	const struct evhttp_uri *uri = evhttp_request_get_evhttp_uri(req);
 	struct trie *pattern_trie = trie_new();
-	struct request request;
 
 	request.ev_req = req;
 	request.pattern_trie = pattern_trie;
@@ -65,10 +65,11 @@ void request_handler(struct evhttp_request *req, void *context)
 				break;
 
 			if (!*p && !*u) {
-				resp.buffer = evbuffer_new();
-				code = (*cur)->handler(&request, &resp);
-				evhttp_send_reply(req, code, NULL, resp.buffer);
-				evbuffer_free(resp.buffer);
+				response.buffer = evbuffer_new();
+				code = (*cur)->handler(&request, &response);
+				evhttp_send_reply(req, code, NULL,
+						  response.buffer);
+				evbuffer_free(response.buffer);
 				goto out;
 			}
 		}
@@ -80,7 +81,7 @@ out:
 	trie_free(pattern_trie, 1);
 }
 
-void fill_body(struct response *resp, const char *format, ...)
+void _fill_body(struct response *resp, const char *format, ...)
 {
 	va_list args;
 	va_start(args, format);

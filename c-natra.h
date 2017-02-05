@@ -6,25 +6,25 @@
 #include "trie.h"
 
 
-#define MKHANDLER2(PATTERN, METHOD, ID)					\
+#define _HANDLER2(PATTERN, METHOD, ID)					\
 	int _handler_##ID(struct request *, struct response *);		\
 	struct handler _s_handler_##ID = {&_handler_##ID, METHOD, PATTERN}; \
 	struct handler *_sp_handler_##ID				\
 	__attribute__((__section__("handlers"))) = &_s_handler_##ID;	\
 	int _handler_##ID(struct request *req, struct response *resp)
-#define MKHANDLER(PATTERN, METHOD, ID) MKHANDLER2(PATTERN, METHOD, ID)
+#define _HANDLER(PATTERN, METHOD, ID) _HANDLER2(PATTERN, METHOD, ID)
 
-#define connect(pattern) MKHANDLER(pattern, EVHTTP_REQ_CONNECT, __COUNTER__)
-#define delete(pattern) MKHANDLER(pattern, EVHTTP_REQ_DELETE, __COUNTER__)
-#define get(pattern) MKHANDLER(pattern, EVHTTP_REQ_GET, __COUNTER__)
-#define options(pattern) MKHANDLER(pattern, EVHTTP_REQ_OPTIONS, __COUNTER__)
-#define patch(pattern) MKHANDLER(pattern, EVHTTP_REQ_PATCH, __COUNTER__)
-#define post(pattern) MKHANDLER(pattern, EVHTTP_REQ_POST, __COUNTER__)
-#define put(pattern) MKHANDLER(pattern, EVHTTP_REQ_PUT, __COUNTER__)
-#define trace(pattern) MKHANDLER(pattern, EVHTTP_REQ_TRACE, __COUNTER__)
+#define connect(PATTERN) _HANDLER(PATTERN, EVHTTP_REQ_CONNECT, __COUNTER__)
+#define delete(PATTERN) _HANDLER(PATTERN, EVHTTP_REQ_DELETE, __COUNTER__)
+#define get(PATTERN) _HANDLER(PATTERN, EVHTTP_REQ_GET, __COUNTER__)
+#define options(PATTERN) _HANDLER(PATTERN, EVHTTP_REQ_OPTIONS, __COUNTER__)
+#define patch(PATTERN) _HANDLER(PATTERN, EVHTTP_REQ_PATCH, __COUNTER__)
+#define post(PATTERN) _HANDLER(PATTERN, EVHTTP_REQ_POST, __COUNTER__)
+#define put(PATTERN) _HANDLER(PATTERN, EVHTTP_REQ_PUT, __COUNTER__)
+#define trace(PATTERN) _HANDLER(PATTERN, EVHTTP_REQ_TRACE, __COUNTER__)
 
 #define map(...) _map(NULL, __VA_ARGS__, NULL)
-#define view3(FNAME, MAP, ID) __asm__ __volatile__(			\
+#define _VIEW2(FNAME, MAP, ID) __asm__ __volatile__(			\
 		"	.data			\n"			\
 		"template_"#ID":		\n"			\
 		"	.incbin	\""FNAME"\"	\n"			\
@@ -33,13 +33,13 @@
 		"	.text			\n");			\
 	extern void *template_##ID;					\
 	_render_template(resp, (char *)&template_##ID, MAP)
-#define view2(FNAME, MAP, ID) view3(FNAME, MAP, ID)
-#define view(FNAME, MAP) view2(FNAME, MAP, __COUNTER__)
+#define _VIEW(FNAME, MAP, ID) _VIEW2(FNAME, MAP, ID)
+#define view(FNAME, MAP) _VIEW(FNAME, MAP, __COUNTER__)
 #define json(PATTERN, ...) body(PATTERN, ##__VA_ARGS__);		\
 	set_header("Content-Type", "application/json; charset=utf-8")
 #define html(PATTERN, ...) body(PATTERN, ##__VA_ARGS__);		\
 	set_header("Content-Type", "text/html; charset=utf-8")
-#define body(PATTERN, ...) fill_body(resp, PATTERN, ##__VA_ARGS__)
+#define body(PATTERN, ...) _fill_body(resp, PATTERN, ##__VA_ARGS__)
 #define set_header(HEADER, VALUE) _set_header(req->ev_req, HEADER, VALUE)
 #define header(HEADER) evhttp_find_header(				\
 		evhttp_request_get_input_headers(req->ev_req), HEADER)
@@ -76,11 +76,10 @@ struct handler {
 };
 
 int start(uint16_t port);
-void request_handler(struct evhttp_request *req, void *context);
 void _render_template(struct response *resp, const char *template, struct trie *map);
 struct trie *_map(void *, ...);
 void _set_header(struct evhttp_request *req, const char *key, const char *value);
-void fill_body(struct response *resp, const char *format, ...);
+void _fill_body(struct response *resp, const char *format, ...);
 
 extern struct handler *__start_handlers[], *__stop_handlers[];
 
