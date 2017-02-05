@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -136,14 +137,23 @@ struct trie *_map(void *dummy, ...)
 	return map;
 }
 
+static void sigint_cb(evutil_socket_t sig, short events, void *base)
+{
+	printf("\nGoodbye!\n");
+	event_base_loopexit((struct event_base *)base, NULL);
+}
+
 int start(uint16_t port)
 {
+	struct event *signal_event;
 	struct event_base *base = event_base_new();
 	struct evhttp *http = evhttp_new(base);
 	evhttp_set_allowed_methods(http, EVHTTP_REQ_GET | EVHTTP_REQ_POST
 				   | EVHTTP_REQ_PUT | EVHTTP_REQ_DELETE);
 	evhttp_bind_socket(http, "0.0.0.0", port);
 	evhttp_set_gencb(http, request_handler, NULL);
+	signal_event = evsignal_new(base, SIGINT, sigint_cb, (void *)base);
+	event_add(signal_event, NULL);
 	/* XXX: New in libevent 2.1 */
 	/* evhttp_set_default_content_type(http, "text/html; charset=utf-8"); */
 
@@ -151,6 +161,7 @@ int start(uint16_t port)
 
 	event_base_dispatch(base);
 
+	event_free(signal_event);
 	evhttp_free(http);
 	event_base_free(base);
 
