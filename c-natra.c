@@ -105,7 +105,8 @@ void _render_template(struct response *resp, const char *template,
 	for (; *c; ++c) {
 		if (c[0] != '{' || c[1] != '{')
 			continue;
-		evbuffer_add(resp->buffer, template, c - template);
+		evbuffer_add_reference(resp->buffer, template, c - template,
+				       NULL, NULL);
 		c += 2;
 		for (i = 0; *c && (c[0] != '}' || c[1] != '}'); ++c, ++i)
 			key[i] = *c;
@@ -113,10 +114,11 @@ void _render_template(struct response *resp, const char *template,
 		value = trie_find(map, key);
 		for (i = 0; value[i]; ++i)
 			;
-		evbuffer_add(resp->buffer, value, i);
+		evbuffer_add_reference(resp->buffer, value, i, NULL, NULL);
 		template = c += 2;
 	}
-	evbuffer_add(resp->buffer, template, c - template);
+	evbuffer_add_reference(resp->buffer, template, c - template,
+			       NULL, NULL);
 	trie_free(map, 0);
 }
 
