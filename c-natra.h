@@ -49,7 +49,7 @@
 		len = len > BYTES ? BYTES : len;			\
 		char *buf = alloca(len+1);				\
 		ev_ssize_t n = evbuffer_copyout(b, buf, len);		\
-		buf[len] = 0;						\
+		buf[n] = 0;						\
 		buf; })
 #define params(KEY) trie_find(req->pattern_trie, KEY)
 #define query(KEY) ({ const char *qs = evhttp_uri_get_query(req->uri);	\
