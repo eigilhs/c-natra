@@ -30,7 +30,7 @@ void *trie_find(struct trie *trie, const char *key)
 	return trie->data;
 }
 
-struct trie *trie_insert(struct trie *trie, const char *key, void *value)
+void trie_insert(struct trie *trie, const char *key, void *value)
 {
 	struct trie *child;
 	for (child = trie->children; child; child = child->siblings)
