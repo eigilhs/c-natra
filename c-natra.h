@@ -32,6 +32,7 @@
 		"	.align	4		\n"			\
 		"	.text			\n");			\
 	extern void *template_##ID;					\
+	set_header("Content-Type", "text/html; charset=utf-8");		\
 	_render_template(resp, (char *)&template_##ID, MAP)
 #define _VIEW(FNAME, MAP, ID) _VIEW2(FNAME, MAP, ID)
 #define view(FNAME, MAP) _VIEW(FNAME, MAP, __COUNTER__)
