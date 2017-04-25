@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "trie.h"
+#include "cn-trie.h"
 
 struct trie *trie_new(void)
 {

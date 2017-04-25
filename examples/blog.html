@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{title}}</title>
+    <style type="text/css">
+      html, body {
+        height: 100%;
+      }
+      body {
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        font-family: "Helvetica", "Arial", sans-serif;
+        font-size: 16pt;
+        color: #555;
+        line-height: 1.5;
+        padding: 4em 1em;
+      }
+      h1 {
+        font-size: 2.5em;
+      }
+      h1, h2, strong {
+        color: #333;
+      }
+      a {
+        color: #e81c4f;
+      }
+      code {
+        font-size: .8em;
+      }
+      #container {
+        max-width: 40em;
+        display: flex;
+        flex-flow: row wrap;
+        min-height: 100vh;
+      }
+      #header, #content, #info, #footer {
+        flex-grow: 1;
+        flex-basis: 100%;
+      }
+      #header {
+        padding: 10px;
+        text-align: center;
+      }
+      #info {
+        padding: 10px;
+        text-align: right;
+      }
+      #footer {
+        padding: 4em;
+        text-align: center;
+      }
+      #content {
+        padding: 10px;
+        margin-right: 30px;
+      }
+      @media all and (min-width: 800px) {
+        #content { flex: 3 0px; }
+        #info { flex: 1 0px; }
+      }
+      .title {
+        font-size: .8em;
+        font-style: italic;
+      }
+      .email {
+        font-size: .8em;
+        text-decoration: none;
+      }
+      .name {
+        margin-bottom: 0px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="header">
+        {{body}}
+      </div>
+      <div id="content">
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur vel augue convallis, porta magna vel, porttitor nisl. In vel mauris sapien. Vestibulum quis ultrices libero. Nulla a ex vitae mauris viverra ornare sed in mi. Vestibulum at nisi porttitor lacus condimentum suscipit eu quis dolor. Etiam elementum, ligula quis eleifend vehicula, enim nunc ornare felis, ac maximus elit neque quis nisl. Nulla volutpat felis auctor nibh finibus tempor. Vestibulum vitae sagittis dui. Vestibulum et aliquet lacus, pharetra sagittis nulla. Mauris suscipit nunc vitae enim aliquet lobortis. Morbi nec rutrum erat.
+        </p>
+        <p>
+            Etiam vel elit nec nibh sodales pulvinar imperdiet eget tellus. Suspendisse potenti. Aliquam a nisi non lacus consectetur laoreet non in metus. Vestibulum sed magna enim. Proin condimentum nisl ac odio tempor mollis. Aliquam erat volutpat. Sed eu lacus erat. Morbi ipsum libero, auctor ut aliquam quis, mattis ut nisl. Etiam viverra neque eget vestibulum tincidunt. Nunc gravida tempor dolor id luctus. Pellentesque ullamcorper aliquam justo, sit amet feugiat diam ullamcorper et. Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse iaculis sem sit amet odio vehicula scelerisque.
+        </p>
+        <p>
+            Nullam tellus eros, fermentum et nisl non, pretium facilisis metus. Nullam tortor lectus, vehicula vitae purus at, fringilla varius massa. Etiam tempus ultricies massa quis cursus. Maecenas eros risus, faucibus sed risus dapibus, fermentum tincidunt sem. Quisque nisl diam, feugiat vel justo quis, tristique vehicula ex. Proin at rhoncus dui, vitae mattis ligula. Nunc hendrerit vitae dui eget facilisis. Pellentesque faucibus nulla at arcu fermentum vehicula. Proin et auctor mi. Etiam sit amet tellus consectetur, eleifend ipsum eget, ultrices sapien. Aliquam vitae est eu elit gravida pulvinar. Duis venenatis arcu eget tristique scelerisque.
+        </p>
+      </div>
+      <div id="info">
+        <h3 class="name">Some Dudette</h3>
+        <div class="title">Software Engineer at Some Company</div>
+        <a class="email" href="mailto:some@example.net">some@example.net</a>
+      </div>
+      <div id="footer">
+        Some Company © 2017
+      </div>
+    </div>
+  </body>
+</html>

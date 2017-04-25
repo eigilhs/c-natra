@@ -1,21 +1,34 @@
-APP := example
-CFLAGS := -O3
-LDLIBS := -levent
+CFLAGS := -O3 -Wall -Wextra -Wno-unused-parameter -Iinclude
+VPATH := src
+PREFIX ?= /usr/local
 
-.PHONY: clean distclean
+.PHONY: clean distclean dist install uninstall
 
-$(APP): c-natra.o trie.o
-$(APP).o: *.html
+lib/libcnatra.a: c-natra.o cn-trie.o | lib
+	$(AR) cvq $@ $^
 
-.depend: *.[ch]
-	$(CC) -MM *.c > $@
+lib:
+	mkdir -p $@
+
+install: lib/libcnatra.a | lib include
+	cp -r $| $(PREFIX)
+
+uninstall:
+	$(RM) $(addprefix $(PREFIX)/include/, c-natra.h cn-trie.h)
+	$(RM) $(PREFIX)/lib/libcnatra.a
+
+dist: lib/libcnatra.a | lib include
+	tar cvJf libcnatra.tar.xz --xform "s,^,libcnatra/," $|
+
+.depend: src/* include/*
+	$(CC) -Iinclude -MM src/* > $@
 	sed -i 's/$$/ $(firstword $(MAKEFILE_LIST))/' $@
 
 clean:
 	$(RM) *.o
 
 distclean: clean
-	$(RM) $(APP)
-	$(RM) .depend
+	$(RM) *.tar.xz .depend
+	$(RM) -r lib
 
 -include .depend

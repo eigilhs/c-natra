@@ -1,8 +1,18 @@
-#include "c-natra.h"
+#include <c-natra.h>
 
 
 get("/") {
 	html("<h1>Hello, World!</h1>");
+	return HTTP_OK;
+}
+
+get("/private") {
+	set_header("Location", "/login");
+	return HTTP_FOUND;
+}
+
+get("/login") {
+	html("<h1>Please log in</h1>");
 	return HTTP_OK;
 }
 
@@ -19,6 +29,14 @@ get("/api") {
 get("/template") {
 	view("index.html", map("title", "Template test",
 			       "body", "<h1>Success!</h1>"));
+	return HTTP_OK;
+}
+
+get("/blog") {
+	view("blog.html", map("title", "On the usage of spinlocks in "
+			      "ULTRIX and System V",
+			      "body", "<h1>On the usage of spinlocks in"
+			      " ULTRIX and System V</h1>"));
 	return HTTP_OK;
 }
 

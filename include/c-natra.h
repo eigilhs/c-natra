@@ -3,7 +3,7 @@
 #include <event2/buffer.h>
 #include <event2/keyvalq_struct.h>
 #include <alloca.h>
-#include "trie.h"
+#include "cn-trie.h"
 
 
 #define _HANDLER2(PATTERN, METHOD, ID)					\
@@ -89,6 +89,7 @@ extern struct handler *__start_handlers[], *__stop_handlers[];
 #define HTTP_RESETCONTENT	205
 #define HTTP_PARTIALCONTENT	206
 #define HTTP_MULTIPLECHOICES	300
+#define HTTP_FOUND		302
 #define HTTP_SEEOTHER		303
 #define HTTP_USEPROXY		305
 #define HTTP_TEMPORARYREDIRECT	307
