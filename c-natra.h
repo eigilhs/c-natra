@@ -10,7 +10,7 @@
 	int _handler_##ID(struct request *, struct response *);		\
 	struct handler _s_handler_##ID = {&_handler_##ID, METHOD, PATTERN}; \
 	struct handler *_sp_handler_##ID				\
-	__attribute__((__section__("handlers"))) = &_s_handler_##ID;	\
+	__attribute__((__section__("handlers"),used)) = &_s_handler_##ID; \
 	int _handler_##ID(struct request *req, struct response *resp)
 #define _HANDLER(PATTERN, METHOD, ID) _HANDLER2(PATTERN, METHOD, ID)
 
