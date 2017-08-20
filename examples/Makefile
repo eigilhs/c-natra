@@ -1,6 +1,6 @@
 APP := example
 CFLAGS := -O3 -I../include
-LDLIBS := -levent -lcnatra -L../lib
+LDLIBS := -lh2o -L../lib -lcnatra
 
 .PHONY: clean distclean all
 

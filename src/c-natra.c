@@ -23,7 +23,16 @@ void log_req(struct evhttp_request *req, uint16_t code)
 		code, uri, evhttp_find_header(headers, "User-Agent"));
 }
 
-void request_handler(struct evhttp_request *req, void *context)
+static h2o_pathconf_t *register_handler(h2o_hostconf_t *hostconf,
+		const char *path, int (*on_req)(h2o_handler_t *, h2o_req_t *))
+{
+	h2o_pathconf_t *pathconf = h2o_config_register_path(hostconf, path, 0);
+	h2o_handler_t *handler = h2o_create_handler(pathconf, sizeof(*handler));
+	handler->on_req = on_req;
+	return pathconf;
+}
+
+static int request_handler(h2o_handler_t *self, h2o_req_t *req)
 {
 	const char *u, *p;
 	uint16_t i, code;
@@ -32,7 +41,9 @@ void request_handler(struct evhttp_request *req, void *context)
 	struct response response;
 	struct handler **cur;
 
-	enum evhttp_cmd_type method = evhttp_request_get_command(req);
+	req->method.base, req->method.len;
+	req->pathconf->path
+	/* enum evhttp_cmd_type method = evhttp_request_get_command(req); */
 	const struct evhttp_uri *uri = evhttp_request_get_evhttp_uri(req);
 	struct trie *pattern_trie = trie_new();
 
@@ -79,7 +90,7 @@ void request_handler(struct evhttp_request *req, void *context)
 
 	evhttp_send_error(req, code = HTTP_NOTFOUND, NULL);
 out:
-	log_req(req, code);
+	/* log_req(req, code); */
 	trie_free(pattern_trie, 1);
 }
 
@@ -144,27 +155,103 @@ static void sigint_cb(evutil_socket_t sig, short events, void *base)
 	event_base_loopexit((struct event_base *)base, NULL);
 }
 
-int start(uint16_t port)
+static void on_accept(uv_stream_t *listener, int status)
 {
-	struct event *signal_event;
-	struct event_base *base = event_base_new();
-	struct evhttp *http = evhttp_new(base);
-	evhttp_set_allowed_methods(http, EVHTTP_REQ_GET | EVHTTP_REQ_POST
-				   | EVHTTP_REQ_PUT | EVHTTP_REQ_DELETE);
-	evhttp_bind_socket(http, "0.0.0.0", port);
-	evhttp_set_gencb(http, request_handler, NULL);
-	signal_event = evsignal_new(base, SIGINT, sigint_cb, (void *)base);
-	event_add(signal_event, NULL);
-	/* XXX: New in libevent 2.1 */
-	/* evhttp_set_default_content_type(http, "text/html; charset=utf-8"); */
+	uv_tcp_t *conn;
+	h2o_socket_t *sock;
 
-	printf("\nServing on port %u ...\n\n", port);
+	if (status != 0)
+		return;
 
-	event_base_dispatch(base);
+	conn = h2o_mem_alloc(sizeof(*conn));
+	uv_tcp_init(listener->loop, conn);
 
-	event_free(signal_event);
-	evhttp_free(http);
-	event_base_free(base);
+	if (uv_accept(listener, (uv_stream_t *)conn) != 0) {
+		uv_close((uv_handle_t *)conn, (uv_close_cb)free);
+		return;
+	}
+
+	sock = h2o_uv_socket_create((uv_handle_t *)conn, (uv_close_cb)free);
+	h2o_accept(&accept_ctx, sock);
+}
+
+static int create_listener(void)
+{
+	static uv_tcp_t listener;
+	struct sockaddr_in addr;
+	int r;
+
+	uv_tcp_init(ctx.loop, &listener);
+	uv_ip4_addr("127.0.0.1", 7890, &addr);
+	if ((r = uv_tcp_bind(&listener, (struct sockaddr *)&addr, 0)) != 0) {
+		fprintf(stderr, "uv_tcp_bind:%s\n", uv_strerror(r));
+		goto Error;
+	}
+	if ((r = uv_listen((uv_stream_t *)&listener, 128, on_accept)) != 0) {
+		fprintf(stderr, "uv_listen:%s\n", uv_strerror(r));
+		goto Error;
+	}
 
 	return 0;
+Error:
+	uv_close((uv_handle_t *)&listener, NULL);
+	return r;
+}
+
+int start(uint16_t port)
+{
+	h2o_hostconf_t *hostconf;
+
+	signal(SIGPIPE, SIG_IGN);
+
+	h2o_config_init(&config);
+	hostconf = h2o_config_register_host(&config, h2o_iovec_init(H2O_STRLIT("default")), 65535);
+	register_handler(hostconf, "/", request_handler);
+	/* h2o_reproxy_register(register_handler(hostconf, "/reproxy-test", reproxy_test)); */
+	/* h2o_file_register(h2o_config_register_path(hostconf, "/", 0), "examples/doc_root", NULL, NULL, 0); */
+
+	uv_loop_t loop;
+	uv_loop_init(&loop);
+	h2o_context_init(&ctx, &loop, &config);
+
+	/* if (USE_HTTPS && setup_ssl("examples/h2o/server.crt", "examples/h2o/server.key") != 0) */
+	/* 	goto error; */
+
+	/* disabled by default: uncomment the line below to enable access logging */
+	/* h2o_access_log_register(&config.default_host, "/dev/stdout", NULL); */
+
+	accept_ctx.ctx = &ctx;
+	accept_ctx.hosts = config.hosts;
+
+	if (create_listener() != 0) {
+		fprintf(stderr, "failed to listen to 127.0.0.1:7890:%s\n", strerror(errno));
+		goto error;
+	}
+
+	uv_run(ctx.loop, UV_RUN_DEFAULT);
+
+error:
+	return 1;
+
+	/* struct event *signal_event; */
+	/* struct event_base *base = event_base_new(); */
+	/* struct evhttp *http = evhttp_new(base); */
+	/* evhttp_set_allowed_methods(http, EVHTTP_REQ_GET | EVHTTP_REQ_POST */
+	/* 			   | EVHTTP_REQ_PUT | EVHTTP_REQ_DELETE); */
+	/* evhttp_bind_socket(http, "0.0.0.0", port); */
+	/* evhttp_set_gencb(http, request_handler, NULL); */
+	/* signal_event = evsignal_new(base, SIGINT, sigint_cb, (void *)base); */
+	/* event_add(signal_event, NULL); */
+	/* /\* XXX: New in libevent 2.1 *\/ */
+	/* /\* evhttp_set_default_content_type(http, "text/html; charset=utf-8"); *\/ */
+
+	/* printf("\nServing on port %u ...\n\n", port); */
+
+	/* event_base_dispatch(base); */
+
+	/* event_free(signal_event); */
+	/* evhttp_free(http); */
+	/* event_base_free(base); */
+
+	/* return 0; */
 }
